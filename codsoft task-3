@@ -1,0 +1,44 @@
+import random
+import string
+
+def generate_password(length, include_special_chars=True):
+    """Generate a random password with the specified length and complexity."""
+    if length < 1:
+        raise ValueError("Password length must be at least 1 character.")
+    
+    # Define character sets
+    characters = string.ascii_letters + string.digits
+    if include_special_chars:
+        characters += string.punctuation
+    
+    # Generate password
+    password = ''.join(random.choice(characters) for _ in range(length))
+    return password
+
+def main():
+    print("Password Generator")
+    
+    while True:
+        try:
+            length = int(input("Enter the desired length of the password: "))
+            if length < 1:
+                print("Length must be a positive integer.")
+                continue
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+            continue
+        
+        include_special_chars_input = input("Include special characters (y/n)? ").strip().lower()
+        include_special_chars = include_special_chars_input == 'y'
+        
+        # Generate and display the password
+        password = generate_password(length, include_special_chars)
+        print(f"Generated Password: {password}")
+        
+        # Option to generate another password
+        another = input("Generate another password (y/n)? ").strip().lower()
+        if another != 'y':
+            break
+
+if __name__ == "__main__":
+    main()
