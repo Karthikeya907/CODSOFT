@@ -1,0 +1,155 @@
+import json
+import tkinter as tk
+from tkinter import messagebox
+
+# Define the Task class
+class Task:
+    def __init__(self, description, completed=False):
+        self.description = description
+        self.completed = completed
+
+    def __str__(self):
+        status = "✓" if self.completed else "✗"
+        return f"[{status}] {self.description}"
+
+# Define the TaskManager class
+class TaskManager:
+    def __init__(self):
+        self.tasks = []
+        self.load_tasks()
+
+    def add_task(self, description):
+        self.tasks.append(Task(description))
+
+    def view_tasks(self):
+        for i, task in enumerate(self.tasks):
+            print(f"{i + 1}. {task}")
+
+    def update_task(self, index, completed=None, description=None):
+        if 0 <= index < len(self.tasks):
+            if completed is not None:
+                self.tasks[index].completed = completed
+            if description is not None:
+                self.tasks[index].description = description
+
+    def delete_task(self, index):
+        if 0 <= index < len(self.tasks):
+            self.tasks.pop(index)
+
+    def save_tasks(self):
+        with open('tasks.json', 'w') as f:
+            json.dump([task.__dict__ for task in self.tasks], f)
+
+    def load_tasks(self):
+        try:
+            with open('tasks.json', 'r') as f:
+                tasks_data = json.load(f)
+                self.tasks = [Task(**task) for task in tasks_data]
+        except FileNotFoundError:
+            self.tasks = []
+
+# Define the GUI application using Tkinter
+class ToDoApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("To-Do List Application")
+        self.manager = TaskManager()  # Initialize TaskManager
+        self.create_widgets()
+        self.update_task_list()
+
+    def create_widgets(self):
+        self.task_listbox = tk.Listbox(self.root, width=50, height=10)
+        self.task_listbox.pack(pady=10)
+
+        self.entry = tk.Entry(self.root, width=50)
+        self.entry.pack(pady=5)
+
+        self.add_button = tk.Button(self.root, text="Add Task", command=self.add_task)
+        self.add_button.pack(pady=5)
+
+        self.delete_button = tk.Button(self.root, text="Delete Task", command=self.delete_task)
+        self.delete_button.pack(pady=5)
+
+        self.update_button = tk.Button(self.root, text="Update Task", command=self.update_task)
+        self.update_button.pack(pady=5)
+
+    def add_task(self):
+        description = self.entry.get()
+        if description:
+            self.manager.add_task(description)
+            self.update_task_list()
+            self.entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Warning", "Task description cannot be empty.")
+
+    def update_task_list(self):
+        self.task_listbox.delete(0, tk.END)
+        for i, task in enumerate(self.manager.tasks):
+            self.task_listbox.insert(tk.END, f"{i + 1}. {task}")
+
+    def delete_task(self):
+        selected_index = self.task_listbox.curselection()
+        if selected_index:
+            self.manager.delete_task(selected_index[0])
+            self.update_task_list()
+        else:
+            messagebox.showwarning("Warning", "No task selected.")
+
+    def update_task(self):
+        selected_index = self.task_listbox.curselection()
+        if selected_index:
+            new_description = self.entry.get()
+            if new_description:
+                self.manager.update_task(selected_index[0], description=new_description)
+                self.update_task_list()
+            else:
+                messagebox.showwarning("Warning", "Task description cannot be empty.")
+        else:
+            messagebox.showwarning("Warning", "No task selected.")
+
+# CLI interface
+def cli_interface():
+    manager = TaskManager()
+    while True:
+        print("\n1. Add Task")
+        print("2. View Tasks")
+        print("3. Update Task")
+        print("4. Delete Task")
+        print("5. Exit")
+        choice = input("Choose an option: ")
+
+        if choice == '1':
+            description = input("Enter task description: ")
+            manager.add_task(description)
+        elif choice == '2':
+            manager.view_tasks()
+        elif choice == '3':
+            manager.view_tasks()
+            index = int(input("Enter task number to update: ")) - 1
+            completed = input("Mark as completed? (y/n): ") == 'y'
+            new_description = input("Enter new description (leave blank to keep unchanged): ")
+            manager.update_task(index, completed, new_description if new_description else None)
+        elif choice == '4':
+            manager.view_tasks()
+            index = int(input("Enter task number to delete: ")) - 1
+            manager.delete_task(index)
+        elif choice == '5':
+            manager.save_tasks()
+            break
+        else:
+            print("Invalid choice, please try again.")
+
+# Main function to run either CLI or GUI
+def main():
+    choice = input("Choose interface (cli/gui): ").strip().lower()
+    if choice == 'cli':
+        cli_interface()
+    elif choice == 'gui':
+        root = tk.Tk()
+        app = ToDoApp(root)
+        root.mainloop()
+    else:
+        print("Invalid choice. Exiting.")
+
+if __name__ == "__main__":
+    main()
